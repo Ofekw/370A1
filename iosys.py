@@ -8,7 +8,6 @@ from process import State
 import curses
 import curses.panel
 
-
 WINDOW_HEIGHT = 4
 WINDOW_WIDTH = 40
 
@@ -82,7 +81,6 @@ class IO_Sys():
         window_box.set_name(str(process.id))
         new_location = window_box.get_contents_location()
         panel = process.panel
-
         panel.move(*new_location) # move the process panel to the new location
         self.refresh_screen()
 
@@ -100,7 +98,7 @@ class IO_Sys():
         """Gets input from the window associated with 'process'."""
         # change the state of the process to waiting
         self.the_dispatcher.proc_waiting(process)
-
+        # ...
         return # return the data here
 
 # =======================================================================================================================
@@ -122,7 +120,7 @@ class Process_Window_Box():
         self.box_around_window.box()
         self.box_around_window.addstr(0, 2, " Process: ")
         self.box_around_window.addstr(0, 12, name + " ")
-        self.box_around_window.refresh()
+        # self.box_around_window.refresh()
 
     def get_contents_location(self):
         """Return the (y, x) location of the contents of this window box."""

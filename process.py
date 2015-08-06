@@ -13,7 +13,6 @@ from enum import Enum
 Type = Enum("Type", "background interactive")
 State = Enum("State", "runnable waiting killed")
 
-
 class Process(threading.Thread):
     """A process."""
 
@@ -34,12 +33,17 @@ class Process(threading.Thread):
         self.daemon = True
         self.state = State.runnable
         self.block_event = threading.Event()
-
         # You will need a process state variable - self.state
         # which should only be modified by the dispatcher and io system.
         # the state can be used to determine which list - runnable or waiting the process
         # appears in.
         # ...
+
+    def pause(self):
+        self.block_event.wait()
+
+    def resume(self):
+        self.block_event.set()
 
     def run(self):
         """Start the process running."""
@@ -53,19 +57,19 @@ class Process(threading.Thread):
         """Run as an interactive process."""
         # Something like the following but you will have to think about
         # pausing and resuming the process.
-        self.block_event.set()
-        loops = self.ask_user()
-        while loops > 0:
-            for i in range(loops):
-                self.main_process_body()
-            self.iosys.write(self, "\n")
-            loops = self.ask_user()
+
+        # loops = self.ask_user()
+        # while loops > 0:
+        #     for i in range(loops):
+        #         self.main_process_body()
+        #     self.iosys.write(self, "\n")
+        #     loops = self.ask_user()
 
     def run_background(self):
         """Run as a background process."""
-        loops = randint(10, 30)
+        loops = randint(10, 20)
         for i in range(loops):
-            self.main_process_body()
+                self.main_process_body()
 
     def ask_user(self):
         """Ask the user for number of loops."""
@@ -79,12 +83,11 @@ class Process(threading.Thread):
         # Something like the following but you will have to think about
         # pausing and resuming the process.
 
-        # check to see if supposed to terminate
+        #check to see if supposed to terminate
         if self.state == State.killed:
-            #_thread.exit()
-            self.dispatcher.proc_finished(self)
-        elif self.state == State.waiting:
-            self.block_event.wait()
+             _thread.exit()
+        if self.state == State.waiting:
+             self.block_event.wait()
 
         self.iosys.write(self, "*")
-        sleep(0.1)
+        sleep(0.5)

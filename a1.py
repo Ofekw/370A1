@@ -11,7 +11,6 @@ import curses.panel
 import re
 from time import sleep
 
-
 def menu(menu_string):
     """Present menu information, receive key from user and process.
 
@@ -86,22 +85,22 @@ def kill():
     return False
 
 def halt():
-    """Halt the system for 10 seconds.
+    """Halt the system for 5 seconds.
     This is so that can see the current state of the system
     without things changing.
     """
     the_dispatcher.pause_system()
-    sleep(10)
+    sleep(5)
     the_dispatcher.resume_system()
     return False
 
 def pause():
-    """Pause input for 10 seconds.
+    """Pause input for 5 seconds.
     This is so that when you watch the system when receiving
     input from a file you can allow the system to run for a time
     without new commands arriving.
     """
-    sleep(10)
+    sleep(5)
 
 def wait():
     """Wait until all runnable processes have finished."""
@@ -138,7 +137,7 @@ def main(stdscr):
     menu_window.addstr(1, 0, "Stack of runnable processes")
     menu_window.addstr(1, iosys.WINDOW_WIDTH + 3, "Set of waiting processes")
     the_dispatcher = dispatcher.Dispatcher()
-    io_system = iosys.IO_Sys(the_dispatcher, panels) # setup the windows
+    io_system = iosys.IO_Sys(the_dispatcher, panels)  # setup the windows
     the_dispatcher.set_io_sys(io_system)
     menu("(n)ew, (f)ocus, (t)op, (k)ill, (h)alt, (p)ause, (w)ait, (q)uit")
 
