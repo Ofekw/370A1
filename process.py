@@ -55,15 +55,13 @@ class Process(threading.Thread):
 
     def run_interactive(self):
         """Run as an interactive process."""
-        # Something like the following but you will have to think about
-        # pausing and resuming the process.
-
-        # loops = self.ask_user()
-        # while loops > 0:
-        #     for i in range(loops):
-        #         self.main_process_body()
-        #     self.iosys.write(self, "\n")
-        #     loops = self.ask_user()
+        loops = self.ask_user()
+        self.iosys.write(self, "\n")
+        while loops > 0:
+            for i in range(loops):
+                self.main_process_body()
+                self.iosys.write(self, "\n")
+                loops = self.ask_user()
 
     def run_background(self):
         """Run as a background process."""
@@ -74,14 +72,14 @@ class Process(threading.Thread):
     def ask_user(self):
         """Ask the user for number of loops."""
         self.iosys.write(self, "How many loops? ")
-        input = self.iosys.read(self)
+        user_input = self.iosys.read(self)
         if self.state == State.killed:
             _thread.exit()
-        return int(input)
+        return int(user_input)
 
     def main_process_body(self):
         # Something like the following but you will have to think about
-        # pausing and resuming the process.
+        #self.block_event.wait()  # pausing and resuming the process.
 
         #check to see if supposed to terminate
         if self.state == State.killed:
@@ -90,4 +88,4 @@ class Process(threading.Thread):
              self.block_event.wait()
 
         self.iosys.write(self, "*")
-        sleep(0.5)
+        sleep(0.1)

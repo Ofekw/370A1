@@ -6,6 +6,7 @@
 
 from threading import Lock, Event
 from process import State
+from process import Type
 
 class Dispatcher():
     """The dispatcher."""
@@ -30,14 +31,14 @@ class Dispatcher():
             size_of_stack += 1
             self._active_process.state = State.waiting
             self._running_process_stack.append(self._active_process)
+
+        process.state = State.waiting
         self.io_sys.allocate_window_to_process(process, size_of_stack)
         self._running_process_stack.append(process)
         self.dispatch_next_process()
 
     def dispatch_next_process(self):
         """Dispatch the process at the top of the stack."""
-        size_of_stack = len(self._running_process_stack) + len(self._paused_process_stack)
-
         if self._running_process_stack:
             self._active_process = self._running_process_stack.pop()
             self._active_process.state = State.runnable
@@ -76,7 +77,13 @@ class Dispatcher():
 
     def proc_waiting(self, process):
         """Receive notification that process is waiting for input."""
-        # ...
+        process.block_event.wait()
+        process.state = State.waiting
+        self.io_sys.move_process(process, len(self._paused_process_stack))
+        self._paused_process_stack.append(process)
+        #process.block_event.set()
+        self._active_process = None
+        self.dispatch_next_process()
 
     def process_with_id(self, id):
         """Return the process with the id."""
