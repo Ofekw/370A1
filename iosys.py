@@ -92,13 +92,13 @@ class IO_Sys():
 
     def fill_buffer(self, process, data):
         """Fill the process buffer with data."""
-        # ... to top
+        self.process_buffers[process] = data
 
     def read(self, process):
         """Gets input from the window associated with 'process'."""
         # change the state of the process to waiting
         self.the_dispatcher.proc_waiting(process)
-        return 5
+        return self.process_buffers.get(process)
 
 # =======================================================================================================================
 
@@ -123,4 +123,4 @@ class Process_Window_Box():
 
     def get_contents_location(self):
         """Return the (y, x) location of the contents of this window box."""
-        return (self.y+1, self.x+1)
+        return self.y+1, self.x+1

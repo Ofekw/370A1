@@ -57,11 +57,12 @@ class Process(threading.Thread):
         """Run as an interactive process."""
         loops = self.ask_user()
         self.iosys.write(self, "\n")
+
         while loops > 0:
             for i in range(loops):
                 self.main_process_body()
-                self.iosys.write(self, "\n")
-                loops = self.ask_user()
+            self.iosys.write(self, "\n")
+            loops = self.ask_user()
 
     def run_background(self):
         """Run as a background process."""

@@ -69,7 +69,8 @@ def focus():
     input = process.panel.window().getstr()
     # only get here after the user has pressed return
     # put the data in the buffer of the process and wake it up
-    # ...
+    io_system.fill_buffer(process, input)
+    the_dispatcher.proc_resume(process)
     return False
 
 def top():

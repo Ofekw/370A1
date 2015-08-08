@@ -15,9 +15,8 @@ class Dispatcher():
 
     def __init__(self):
         """Construct the dispatcher."""
-        self._active_process = None
         self._running_process_stack = []
-        self._paused_process_stack = []
+        self._waiting_process_stack = []
 
 
     def set_io_sys(self, io_sys):
@@ -26,26 +25,24 @@ class Dispatcher():
 
     def add_process(self, process):
         """Add and start the process."""
-        size_of_stack = len(self._running_process_stack)
-        if self._active_process:
-            size_of_stack += 1
-            self._active_process.state = State.waiting
-            self._running_process_stack.append(self._active_process)
+        if self._running_process_stack:
+            active_process = self._running_process_stack[len(self._running_process_stack)-1]
+            active_process.state = State.waiting
 
-        process.state = State.waiting
-        self.io_sys.allocate_window_to_process(process, size_of_stack)
+        process.state = State.runnable
         self._running_process_stack.append(process)
+        self.io_sys.allocate_window_to_process(process, len(self._running_process_stack)-1)
         self.dispatch_next_process()
 
     def dispatch_next_process(self):
         """Dispatch the process at the top of the stack."""
         if self._running_process_stack:
-            self._active_process = self._running_process_stack.pop()
-            self._active_process.state = State.runnable
-            if self._active_process.is_alive():
-                self._active_process.block_event.set()
+            active_process = self._running_process_stack[len(self._running_process_stack)-1]
+            active_process.state = State.runnable
+            if active_process.is_alive():
+                active_process.block_event.set()
             else:  # has not been started before
-                self._active_process.start()
+                active_process.start()
 
     def to_top(self, process):
         """Move the process to the top of the stack."""
@@ -72,20 +69,30 @@ class Dispatcher():
         Only called from running processes.
         """
         process.iosys.remove_window_from_process(process)
-        self._active_process = None
+        self._running_process_stack.pop()
         self.dispatch_next_process()
 
     def proc_waiting(self, process):
         """Receive notification that process is waiting for input."""
-        process.block_event.wait()
         process.state = State.waiting
-        self.io_sys.move_process(process, len(self._paused_process_stack))
-        self._paused_process_stack.append(process)
-        #process.block_event.set()
-        self._active_process = None
+        self._running_process_stack.pop()
+        self._waiting_process_stack.append(process)
+        self.io_sys.move_process(process, len(self._waiting_process_stack)-1)
+        process.block_event.wait()
+
+    def proc_resume(self, process):
+        process.state = State.runnable
+        self._waiting_process_stack.pop()
+        self._running_process_stack.append(process)
+        self.io_sys.move_process(process, len(self._running_process_stack)-1)
         self.dispatch_next_process()
 
     def process_with_id(self, id):
         """Return the process with the id."""
-        # ...
+        for process in self._running_process_stack:
+            if process.id == id:
+                return process
+        for process in self._waiting_process_stack:
+                if process.id == id:
+                    return process
         return None
