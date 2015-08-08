@@ -41,6 +41,7 @@ class Dispatcher():
             active_process.state = State.runnable
             if active_process.is_alive():
                 active_process.block_event.set()
+                active_process.block_event.clear()
             else:  # has not been started before
                 active_process.start()
 
@@ -79,6 +80,7 @@ class Dispatcher():
         self._waiting_process_stack.append(process)
         self.io_sys.move_process(process, len(self._waiting_process_stack)-1)
         process.block_event.wait()
+        self.dispatch_next_process()
 
     def proc_resume(self, process):
         process.state = State.runnable
