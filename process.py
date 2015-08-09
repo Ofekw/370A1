@@ -1,6 +1,6 @@
 # A1 for COMPSCI340/SOFTENG370 2015
 # Prepared by Robert Sheehan
-# Modified by ...
+# Modified by Ofek Wittenberg
 
 # You are not allowed to use any extra sleep calls.
 
@@ -12,6 +12,7 @@ from enum import Enum
 
 Type = Enum("Type", "background interactive")
 State = Enum("State", "runnable waiting killed")
+
 
 class Process(threading.Thread):
     """A process."""
@@ -66,7 +67,7 @@ class Process(threading.Thread):
 
     def run_background(self):
         """Run as a background process."""
-        loops = randint(10, 20)
+        loops = randint(10, 160)
         for i in range(loops):
                 self.main_process_body()
 
@@ -84,7 +85,8 @@ class Process(threading.Thread):
 
         #check to see if supposed to terminate
         if self.state == State.killed:
-             _thread.exit()
+            self.iosys.write(self, "I SHOULD DIE")
+            _thread.exit()
         if self.state == State.waiting:
              self.block_event.wait()
 
