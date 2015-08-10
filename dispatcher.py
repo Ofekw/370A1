@@ -58,7 +58,6 @@ class Dispatcher():
 
     def to_top(self, process):
         """Move the process to the top of the stack."""
-        self._running_process_stack[len(self._running_process_stack)-1].state = State.waiting  # if stack is more than 2
         for i in range(len(self._running_process_stack)-1):
             if self._running_process_stack[i] == process:
                 self._running_process_stack.pop(i)
@@ -66,6 +65,20 @@ class Dispatcher():
         self._running_process_stack.append(process)
         self.dispatch_next_process()
 
+        self.update_running_stack()
+
+        if len(self._running_process_stack) > 2:
+            self._running_process_stack[len(self._running_process_stack)-3].state = State.waiting  # if stack is more than 2
+
+    def update_running_stack(self):
+        for i in range(0,len(self._running_process_stack)):
+            self._running_process_stack[i].state = State.runnable
+            self.io_sys.move_process(self._running_process_stack[i], i)
+
+    def update_waiting_stack(self):
+        for i in range(len(self._waiting_process_stack)):
+            self._running_process_stack[i].state = State.waiting
+            self.io_sys.move_process(self._waiting_process_stack[i], i)
 
     def pause_system(self):
         """Pause the currently running process.
@@ -83,17 +96,6 @@ class Dispatcher():
     def resume_system(self):
         """Resume running the system."""
         self.dispatch_next_process()
-        # proc = self._running_process_stack[len(self._running_process_stack)-1]
-        # proc.block_event.set()
-        # proc.block_event.clear()
-        # proc.state = State.running
-        #
-        # if len(self._running_process_stack) > 2:
-        #     proc_two = self._running_process_stack[len(self._running_process_stack)-2]
-        #     proc_two.state = State.running
-        #     proc_two.block_event.set()
-        #     proc_two.block_event.clear()
-
 
 
 
@@ -107,7 +109,7 @@ class Dispatcher():
         Only called from running processes.
         """
         process.iosys.remove_window_from_process(process)
-        self._running_process_stack.pop()
+        self._running_process_stack.remove(process)
         self.dispatch_next_process()
 
     def proc_waiting(self, process):
@@ -116,28 +118,32 @@ class Dispatcher():
         self._running_process_stack.pop()
         self._waiting_process_stack.append(process)
         self.io_sys.move_process(process, len(self._waiting_process_stack)-1)
+        # for i in range(len(self.io_sys.waiting_windows_boxes)-1, 0, -1):
+        #     if not isinstance(self.io_sys.waiting_windows_boxes[i], process):
+        #         self.io_sys.move_process(process, i)
         process.block_event.wait()
         self.dispatch_next_process()
 
     def proc_resume(self, process):
         process.state = State.runnable
         self._waiting_process_stack.pop()
-        #self.add_process(process)
         self._running_process_stack.append(process)
         self.io_sys.move_process(process, len(self._running_process_stack)-1)
         self.dispatch_next_process()
 
     def proc_kill(self, process):
-        for i in range(len(self._running_process_stack)-1):
-            if self._running_process_stack[i] == process:
-                self._running_process_stack.pop(i)
 
-        for i in range(len(self._waiting_process_stack)-1):
-            if self._waiting_process_stack[i] == process:
-                self._waiting_process_stack.pop(i)
-
-        self.io_sys.remove_window_from_process(process)
         process.state = State.killed
+        process.block_event.set()
+        if process.type == Type.background:
+            self._running_process_stack.remove(process)
+            self.update_running_stack()
+        else:
+            self._waiting_process_stack.remove(process)
+            #self.update_running_stack()
+        self.io_sys.remove_window_from_process(process)
+
+
         self.dispatch_next_process()
 
     def process_with_id(self, id):
