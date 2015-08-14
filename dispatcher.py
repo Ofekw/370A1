@@ -17,6 +17,9 @@ class Dispatcher():
         """Construct the dispatcher."""
         self._running_process_stack = []
         self._waiting_process_stack = []
+        self._location_list = [False]*8
+        # for i in range(0,8):
+        #     self._location_dict
 
 
     def set_io_sys(self, io_sys):
@@ -117,14 +120,23 @@ class Dispatcher():
         process.state = State.waiting
         self._running_process_stack.pop()
         self._waiting_process_stack.append(process)
-        self.io_sys.move_process(process, len(self._waiting_process_stack)-1)
-        # for i in range(len(self.io_sys.waiting_windows_boxes)-1, 0, -1):
-        #     if not isinstance(self.io_sys.waiting_windows_boxes[i], process):
-        #         self.io_sys.move_process(process, i)
+
+        # self.io_sys.move_process(process, len(self._waiting_process_stack)-1)
+        for i in range(0, 8):
+            if not self._location_list[i]:
+                self.io_sys.move_process(process, i)
+                self._location_list[i] = process
+                break
         process.block_event.wait()
         self.dispatch_next_process()
 
     def proc_resume(self, process):
+        for i in range(0, 8):
+            if self._location_list[i] == process:
+                self._location_list[i] = False
+                break
+
+
         process.state = State.runnable
         self._waiting_process_stack.pop()
         self._running_process_stack.append(process)
