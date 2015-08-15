@@ -81,7 +81,6 @@ class Process(threading.Thread):
 
     def main_process_body(self):
         # Something like the following but you will have to think about
-        #self.block_event.wait()  # pausing and resuming the process.
 
         #check to see if supposed to terminate
         if self.state == State.killed:

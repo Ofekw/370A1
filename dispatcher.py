@@ -7,6 +7,7 @@
 from threading import Lock, Event
 from process import State
 from process import Type
+from threading  import RLock
 
 class Dispatcher():
     """The dispatcher."""
@@ -18,8 +19,7 @@ class Dispatcher():
         self._running_process_stack = []
         self._waiting_process_stack = []
         self._location_list = [False]*8
-        # for i in range(0,8):
-        #     self._location_dict
+        self.lock = RLock()
 
 
     def set_io_sys(self, io_sys):
@@ -61,20 +61,22 @@ class Dispatcher():
 
     def to_top(self, process):
         """Move the process to the top of the stack."""
-        for i in range(len(self._running_process_stack)-1):
-            if self._running_process_stack[i] == process:
-                self._running_process_stack.pop(i)
-
-        self._running_process_stack.append(process)
-        self.dispatch_next_process()
-
+        # for i in range(len(self._running_process_stack)-1):
+        #     if self._running_process_stack[i] == process:
+        self._running_process_stack.remove(process)
+        self.io_sys.remove_window_from_process(process)
         self.update_running_stack()
+        self._running_process_stack.append(process)
+        process.state = State.runnable
+        self.io_sys.allocate_window_to_process(process, len(self._running_process_stack)-1)
+
+        self.dispatch_next_process()
 
         if len(self._running_process_stack) > 2:
             self._running_process_stack[len(self._running_process_stack)-3].state = State.waiting  # if stack is more than 2
 
     def update_running_stack(self):
-        for i in range(0,len(self._running_process_stack)):
+        for i in range(0, len(self._running_process_stack)):
             self._running_process_stack[i].state = State.runnable
             self.io_sys.move_process(self._running_process_stack[i], i)
 
@@ -136,7 +138,6 @@ class Dispatcher():
                 self._location_list[i] = False
                 break
 
-
         process.state = State.runnable
         self._waiting_process_stack.remove(process)
         self._running_process_stack.append(process)
@@ -149,11 +150,16 @@ class Dispatcher():
         process.block_event.set()
         if process.type == Type.background:
             self._running_process_stack.remove(process)
+            self.io_sys.remove_window_from_process(process)
             self.update_running_stack()
         else:
             self._waiting_process_stack.remove(process)
-            #self.update_running_stack()
-        self.io_sys.remove_window_from_process(process)
+            self.io_sys.remove_window_from_process(process)
+            for i in range(0, 8):
+                if self._location_list[i] == process:
+                    self._location_list[i] = False
+                    break
+
 
 
         self.dispatch_next_process()
