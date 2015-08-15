@@ -118,7 +118,7 @@ class Dispatcher():
     def proc_waiting(self, process):
         """Receive notification that process is waiting for input."""
         process.state = State.waiting
-        self._running_process_stack.pop()
+        self._running_process_stack.remove(process)
         self._waiting_process_stack.append(process)
 
         # self.io_sys.move_process(process, len(self._waiting_process_stack)-1)
@@ -138,7 +138,7 @@ class Dispatcher():
 
 
         process.state = State.runnable
-        self._waiting_process_stack.pop()
+        self._waiting_process_stack.remove(process)
         self._running_process_stack.append(process)
         self.io_sys.move_process(process, len(self._running_process_stack)-1)
         self.dispatch_next_process()
@@ -164,6 +164,6 @@ class Dispatcher():
             if process.id == id:
                 return process
         for process in self._waiting_process_stack:
-                if process.id == id:
-                    return process
+            if process.id == id:
+                return process
         return None
