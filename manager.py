@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # A1 for COMPSCI340/SOFTENG370 2015
 # Prepared by Robert Sheehan
-# Modified by ...
+# Modified by Ofek
 
 import dispatcher
 import iosys
